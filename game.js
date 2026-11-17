@@ -50,17 +50,29 @@
   // Put both files next to index.html:
   //   run.mp3  -> plays while running (loops)
   //   dead.mp3 -> plays once after a coconut hits the head
-  const runMusic = new Audio('run.mp3');
-  runMusic.loop = true; runMusic.volume = 0.5; runMusic.preload = 'auto';
-  const deadMusic = new Audio('dead.mp3');
-  deadMusic.loop = false; deadMusic.volume = 0.7; deadMusic.preload = 'auto';
+  const runMusic = new Audio();
+  runMusic.preload = 'none'; runMusic.loop = true; runMusic.volume = 0.5;
+  const deadMusic = new Audio();
+  deadMusic.preload = 'none'; deadMusic.loop = false; deadMusic.volume = 0.7;
   let muted = false;
   try { muted = localStorage.getItem('daab-muted') === '1'; } catch (e) {}
   const muteBtn = document.getElementById('mute');
-  function safePlay(a) { const pr = a.play(); if (pr && pr.catch) pr.catch(() => {}); }
+  function safePlay(a) {
+    if (!a.getAttribute('src')) a.src = (a === runMusic ? 'run.mp3' : 'dead.mp3');
+    const pr = a.play(); if (pr && pr.catch) pr.catch(() => {}); }
   function stop(a) { a.pause(); try { a.currentTime = 0; } catch (e) {} }
   function updateMute() { muteBtn.textContent = muted ? '🔇' : '🔊'; runMusic.muted = muted; deadMusic.muted = muted; }
-  function playRun() { stop(deadMusic); stop(runMusic); updateMute(); safePlay(runMusic); }
+  let deadReady = false;
+  // phones only let audio start after a tap, so "unlock" the death sound silently on the first tap
+  function unlockDead() {
+    if (deadReady) return; deadReady = true;
+    deadMusic.src = 'dead.mp3'; deadMusic.preload = 'auto';
+    deadMusic.muted = true;
+    const pr = deadMusic.play();
+    if (pr && pr.then) pr.then(() => { deadMusic.pause(); try { deadMusic.currentTime = 0; } catch (e) {} updateMute(); })
+                        .catch(() => { updateMute(); });
+  }
+  function playRun() { stop(deadMusic); stop(runMusic); updateMute(); safePlay(runMusic); unlockDead(); }
   function playDead() { runMusic.pause(); stop(deadMusic); updateMute(); safePlay(deadMusic); }
   function stopAllMusic() { stop(runMusic); stop(deadMusic); }
   muteBtn.addEventListener('click', () => {
@@ -302,7 +314,7 @@
   // Player = full-body photo cut-out (player.png, 270x874) with a simple run animation:
   // the upper body bobs, and each leg is a separate slice that shortens when it "steps".
   const playerImg = new Image();
-  playerImg.src = 'player.png';
+  playerImg.src = 'player.webp';
 
   // sprite constants (in sprite pixels)
   const SP = { w: 270, h: 874, ox: 135, oy: 66, legTop: 517, upperBottom: 541, splitX: 133, scale: 165 / 874 };
