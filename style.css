@@ -1,0 +1,44 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; height: 100%; background: #10201a; color: #fff;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow: hidden; touch-action: none; user-select: none;
+}
+body { display: flex; justify-content: center; align-items: center; }
+#wrap {
+  position: relative; height: 100dvh; max-height: 100vh;
+  aspect-ratio: 2 / 3; max-width: 100vw;
+  box-shadow: 0 0 40px rgba(0,0,0,.6);
+}
+canvas { width: 100%; height: 100%; display: block; background: #4c9a43; }
+
+.overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; padding: 20px;
+  background: rgba(10, 30, 15, .78); text-align: center;
+}
+.hidden { display: none !important; }
+h1 { font-size: 2.4rem; margin: 0; }
+h2 { font-size: 1.8rem; margin: 0; }
+.sub, .help { margin: 0; opacity: .85; }
+.help { font-size: .85rem; margin-top: 12px; }
+.buttons { display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 280px; margin-top: 12px; }
+button {
+  font: inherit; font-size: 1.15rem; padding: 14px 18px; border: 0; border-radius: 14px;
+  background: #ffd24a; color: #3a2a00; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 0 #b88f10;
+}
+button:active { transform: translateY(3px); box-shadow: 0 1px 0 #b88f10; }
+button small { display: block; font-size: .7rem; font-weight: 500; opacity: .75; }
+#final-score { font-size: 1.4rem; font-weight: 700; margin: 4px 0 0; }
+#final-best { margin: 0; opacity: .85; }
+
+#touch {
+  position: absolute; left: 0; right: 0; bottom: 10px; display: none;
+  justify-content: space-between; padding: 0 14px; pointer-events: none;
+}
+#touch button {
+  pointer-events: auto; width: 70px; height: 70px; padding: 0; border-radius: 50%;
+  background: rgba(255,255,255,.28); color: #fff; box-shadow: none; font-size: 1.6rem;
+}
+@media (pointer: coarse) { #touch.active { display: flex; } }
