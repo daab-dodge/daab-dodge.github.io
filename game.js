@@ -5,7 +5,7 @@
   canvas.width = W; canvas.height = H;
 
   const ROAD_L = 130, ROAD_R = 350;
-  const FEET_Y = 650, HEAD_H = 128, Z0 = 520;
+  const FEET_Y = 650, HEAD_H = 153, Z0 = 520;
 
   const DIFF = {
     easy:   { spawn: 80, minSpawn: 45, fall: 100, scroll: 3.5, speed: 5.0, aim: 0.35, burst: false },
@@ -262,50 +262,58 @@
     }
   }
 
-  // Player = the real photo cut-out (player.png) + animated legs.
-  // Origin (0,0) = centre of the head.
+  // Player = full-body photo cut-out (player.png, 270x874) with a simple run animation:
+  // the upper body bobs, and each leg is a separate slice that shortens when it "steps".
   const playerImg = new Image();
   playerImg.src = 'player.png';
 
+  // sprite constants (in sprite pixels)
+  const SP = { w: 270, h: 874, ox: 135, oy: 66, legTop: 517, upperBottom: 541, splitX: 133, scale: 165 / 874 };
+
   function drawPlayer() {
     const p = player;
-    const SW = 78, SH = SW * (playerImg.naturalHeight / (playerImg.naturalWidth || 1)) || 123;
+    const ready = playerImg.complete && playerImg.naturalWidth;
+    const swing = p.dead ? 0 : Math.sin(p.phase);
+    const bob = p.dead ? 0 : Math.abs(Math.sin(p.phase)) * -12;
+
     ctx.save();
     ctx.translate(p.x, FEET_Y - HEAD_H);
-
-    const swing = p.dead ? 0 : Math.sin(p.phase);
-    const bob = p.dead ? 0 : Math.abs(Math.sin(p.phase)) * -3;
+    ctx.scale(SP.scale, SP.scale);
+    ctx.translate(-SP.ox, -SP.oy);          // now in sprite pixels, top-left of sprite = (0,0)
 
     // ground shadow
     ctx.fillStyle = 'rgba(0,0,0,.28)';
-    ctx.beginPath(); ctx.ellipse(0, HEAD_H, 34, 9, 0, 0, 6.28); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(SP.ox, SP.h - 6, 150, 36, 0, 0, 6.28); ctx.fill();
 
-    // legs + shoes (animated)
-    ctx.save(); ctx.translate(0, bob * 0.5);
-    ctx.fillStyle = '#2f3342';
-    ctx.fillRect(-18, 84, 16, 36 + swing * 7);
-    ctx.fillRect(2, 84, 16, 36 - swing * 7);
-    ctx.fillStyle = '#18181c';
-    ctx.beginPath(); ctx.roundRect(-20, 117 + swing * 7, 20, 10, 3); ctx.fill();
-    ctx.beginPath(); ctx.roundRect(0, 117 - swing * 7, 20, 10, 3); ctx.fill();
-    ctx.restore();
+    if (ready) {
+      const legH = SP.h - SP.legTop;
+      // legs: left (x < splitX) and right, each squashes upwards when stepping
+      const lSq = 1 - 0.13 * Math.max(0, swing);
+      const rSq = 1 - 0.13 * Math.max(0, -swing);
+      ctx.save();
+      ctx.translate(0, SP.legTop); ctx.scale(1, lSq);
+      ctx.drawImage(playerImg, 0, SP.legTop, SP.splitX, legH, 0, 0, SP.splitX, legH);
+      ctx.restore();
+      ctx.save();
+      ctx.translate(0, SP.legTop); ctx.scale(1, rSq);
+      ctx.drawImage(playerImg, SP.splitX, SP.legTop, SP.w - SP.splitX, legH, SP.splitX, 0, SP.w - SP.splitX, legH);
+      ctx.restore();
 
-    // photo sprite: bobs and sways a little while running
-    ctx.save();
-    ctx.translate(0, SH - 22 + bob);          // pivot at the hem of the shirt
-    ctx.rotate(p.dead ? 0.12 : swing * 0.035);
-    if (playerImg.complete && playerImg.naturalWidth) {
-      ctx.drawImage(playerImg, -SW / 2, -SH, SW, SH);
+      // upper body: bob + tiny sway, pivot at the hips
+      ctx.save();
+      ctx.translate(SP.ox, SP.upperBottom + bob);
+      ctx.rotate(p.dead ? 0.1 : swing * 0.025);
+      ctx.translate(-SP.ox, -SP.upperBottom);
+      ctx.drawImage(playerImg, 0, 0, SP.w, SP.upperBottom, 0, 0, SP.w, SP.upperBottom);
+      ctx.restore();
     } else {
-      ctx.fillStyle = '#86d4e8'; ctx.fillRect(-SW / 2, -SH, SW, SH);
+      ctx.fillStyle = '#86d4e8'; ctx.fillRect(60, 0, 150, SP.h);
     }
-    ctx.restore();
-
     ctx.restore();
 
     // coconut stuck on the head after a hit + stars
     if (p.dead) {
-      const hx = p.x, hy = FEET_Y - HEAD_H - 8;
+      const hx = p.x, hy = FEET_Y - HEAD_H;
       ctx.fillStyle = '#5b3a1e';
       ctx.beginPath(); ctx.arc(hx + 2, hy - 22, 14, 0, 6.28); ctx.fill();
       ctx.fillStyle = '#7b5230';
