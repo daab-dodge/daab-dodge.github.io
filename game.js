@@ -8,9 +8,9 @@
   const FEET_Y = 650, HEAD_H = 153, Z0 = 520;
 
   const DIFF = {
-    easy:   { spawn: 42, minSpawn: 24, fall: 100, scroll: 3.5, speed: 5.0, aim: 0.40, burst: 0.25, extra: 1 },
-    medium: { spawn: 28, minSpawn: 14, fall: 80,  scroll: 4.2, speed: 5.6, aim: 0.50, burst: 0.45, extra: 1 },
-    hard:   { spawn: 16, minSpawn: 9,  fall: 62,  scroll: 5.0, speed: 6.2, aim: 0.60, burst: 0.65, extra: 2 }
+    easy:   { spawn: 40, minSpawn: 22, fall: 100, scroll: 3.5, speed: 5.0, aim: 0.65, burst: 0.30, extra: 1, home: 0.015 },
+    medium: { spawn: 28, minSpawn: 14, fall: 80,  scroll: 4.2, speed: 5.6, aim: 0.80, burst: 0.50, extra: 1, home: 0.025 },
+    hard:   { spawn: 17, minSpawn: 9,  fall: 62,  scroll: 5.0, speed: 6.2, aim: 0.90, burst: 0.70, extra: 2, home: 0.040 }
   };
 
   const menuEl = document.getElementById('menu');
@@ -103,19 +103,24 @@
     state = 'play';
   }
 
-  function spawnCoconut() {
-    const aimed = Math.random() < D.aim;
+  function spawnCoconut(offsetX) {
+    const decoy = offsetX !== undefined;
+    const aimed = decoy || Math.random() < D.aim;
+    const vz = Z0 / D.fall;
+    // while the coconut passes head height the world has scrolled, so aim the landing point
+    // slightly *below* the feet: then at head height its ground spot is right at the player.
+    const hitLandY = FEET_Y + D.scroll * HEAD_H / vz;
     let x, landY;
     if (aimed) {
-      x = clamp(player.x + rand(-35, 35), ROAD_L + 18, ROAD_R - 18);
-      landY = FEET_Y + rand(-25, 25);
+      x = clamp(player.x + (decoy ? offsetX : rand(-24, 24)), ROAD_L + 18, ROAD_R - 18);
+      landY = hitLandY + rand(-12, 12);
     } else {
       x = rand(ROAD_L + 18, ROAD_R - 18);
       landY = rand(300, FEET_Y + 20);
     }
     coconuts.push({
-      x, gy: landY - D.scroll * D.fall, z: Z0, vz: Z0 / D.fall,
-      landed: false, t: 0, rot: rand(0, 6.28)
+      x, gy: landY - D.scroll * D.fall, z: Z0, vz,
+      landed: false, t: 0, rot: rand(0, 6.28), aimed
     });
   }
 
@@ -171,7 +176,7 @@
         const interval = Math.max(D.minSpawn, D.spawn - Math.floor(frames / 240) * 3);
         spawnTimer = interval + rand(-5, 8);
         spawnCoconut();
-        if (Math.random() < D.burst) for (let i = 0; i < D.extra; i++) spawnCoconut();
+        if (Math.random() < D.burst) for (let i = 0; i < D.extra; i++) spawnCoconut((Math.random() < 0.5 ? -1 : 1) * rand(45, 95));
       }
     }
 
@@ -183,8 +188,9 @@
     for (const c of coconuts) {
       if (!c.landed) {
         c.z -= c.vz; c.gy += sc;
+        if (alive && c.aimed && c.z > HEAD_H + 200) c.x += (player.x - c.x) * D.home;
         if (alive && c.z <= HEAD_H + 14 && c.z >= HEAD_H - 40 &&
-            Math.abs(c.x - player.x) < 26 && Math.abs(c.gy - FEET_Y) < 26) {
+            Math.abs(c.x - player.x) < 30 && Math.abs(c.gy - FEET_Y) < 36) {
           die(c);
           continue;
         }
