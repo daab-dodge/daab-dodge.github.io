@@ -8,9 +8,9 @@
   const FEET_Y = 650, HEAD_H = 153, Z0 = 520;
 
   const DIFF = {
-    easy:   { spawn: 80, minSpawn: 45, fall: 100, scroll: 3.5, speed: 5.0, aim: 0.35, burst: false },
-    medium: { spawn: 55, minSpawn: 30, fall: 80,  scroll: 4.2, speed: 5.6, aim: 0.50, burst: false },
-    hard:   { spawn: 34, minSpawn: 16, fall: 62,  scroll: 5.0, speed: 6.2, aim: 0.65, burst: true  }
+    easy:   { spawn: 42, minSpawn: 24, fall: 100, scroll: 3.5, speed: 5.0, aim: 0.40, burst: 0.25, extra: 1 },
+    medium: { spawn: 28, minSpawn: 14, fall: 80,  scroll: 4.2, speed: 5.6, aim: 0.50, burst: 0.45, extra: 1 },
+    hard:   { spawn: 16, minSpawn: 9,  fall: 62,  scroll: 5.0, speed: 6.2, aim: 0.60, burst: 0.65, extra: 2 }
   };
 
   const menuEl = document.getElementById('menu');
@@ -46,6 +46,35 @@
     } catch (e) {}
   }
 
+  // ---------- music ----------
+  // Put both files next to index.html:
+  //   run.mp3  -> plays while running (loops)
+  //   dead.mp3 -> plays once after a coconut hits the head
+  const runMusic = new Audio('run.mp3');
+  runMusic.loop = true; runMusic.volume = 0.5; runMusic.preload = 'auto';
+  const deadMusic = new Audio('dead.mp3');
+  deadMusic.loop = false; deadMusic.volume = 0.7; deadMusic.preload = 'auto';
+  let muted = false;
+  try { muted = localStorage.getItem('daab-muted') === '1'; } catch (e) {}
+  const muteBtn = document.getElementById('mute');
+  function safePlay(a) { const pr = a.play(); if (pr && pr.catch) pr.catch(() => {}); }
+  function stop(a) { a.pause(); try { a.currentTime = 0; } catch (e) {} }
+  function updateMute() { muteBtn.textContent = muted ? '🔇' : '🔊'; runMusic.muted = muted; deadMusic.muted = muted; }
+  function playRun() { stop(deadMusic); stop(runMusic); updateMute(); safePlay(runMusic); }
+  function playDead() { runMusic.pause(); stop(deadMusic); updateMute(); safePlay(deadMusic); }
+  function stopAllMusic() { stop(runMusic); stop(deadMusic); }
+  muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    try { localStorage.setItem('daab-muted', muted ? '1' : '0'); } catch (e) {}
+    updateMute();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { runMusic.pause(); deadMusic.pause(); return; }
+    if (state === 'play') safePlay(runMusic);
+    else if (state === 'over' && !deadMusic.ended) safePlay(deadMusic);
+  });
+  updateMute();
+
   // ---------- state ----------
   let state = 'menu'; // menu | play | over
   let diffName = 'easy', D = DIFF.easy;
@@ -62,6 +91,7 @@
   }
 
   function startGame(d) {
+    playRun();
     diffName = d; D = DIFF[d];
     player = { x: (ROAD_L + ROAD_R) / 2, phase: 0, dead: false, hitBy: null };
     coconuts = []; particles = [];
@@ -102,6 +132,7 @@
     splat(player.x, FEET_Y - HEAD_H, 18, '#fff3c4');
     beep(160, 0.35, 'sawtooth', 0.2, -100);
     state = 'over';
+    playDead();
     const score = Math.floor(dist);
     const prev = getBest(diffName);
     if (score > prev) setBest(diffName, score);
@@ -137,10 +168,10 @@
       // spawning
       spawnTimer--;
       if (spawnTimer <= 0) {
-        const interval = Math.max(D.minSpawn, D.spawn - Math.floor(frames / 300) * 3);
+        const interval = Math.max(D.minSpawn, D.spawn - Math.floor(frames / 240) * 3);
         spawnTimer = interval + rand(-5, 8);
         spawnCoconut();
-        if (D.burst && Math.random() < 0.35) spawnCoconut();
+        if (Math.random() < D.burst) for (let i = 0; i < D.extra; i++) spawnCoconut();
       }
     }
 
@@ -406,7 +437,7 @@
     b.addEventListener('click', () => { beep(500, 0.08, 'square', 0.06); startGame(b.dataset.diff); }));
   document.getElementById('again').addEventListener('click', () => startGame(diffName));
   document.getElementById('tomenu').addEventListener('click', () => {
-    overEl.classList.add('hidden'); menuEl.classList.remove('hidden'); state = 'menu'; refreshBest();
+    overEl.classList.add('hidden'); menuEl.classList.remove('hidden'); state = 'menu'; stopAllMusic(); refreshBest();
   });
 
   initTrees();
