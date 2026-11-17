@@ -262,134 +262,151 @@
     }
   }
 
-  // Cartoon runner, seen from BEHIND, head turned slightly right (like the reference photo).
-  // No face is ever drawn. Origin (0,0) = centre of the head.
+  // Cartoon runner seen from directly BEHIND: stocky build, big round head,
+  // bald crown with a ring of dark hair, thick beard bulging past the jaw,
+  // glasses arms over the ears, light-blue dotted shirt. No face is ever drawn.
+  // Origin (0,0) = centre of the head.
   function drawPlayer() {
     const p = player;
     ctx.save();
     ctx.translate(p.x, FEET_Y - HEAD_H);
+    // scale the whole character up a little, anchored at the feet
+    ctx.translate(0, HEAD_H); ctx.scale(1.12, 1.12); ctx.translate(0, -HEAD_H);
+
     const swing = p.dead ? 0 : Math.sin(p.phase);
     const bob = p.dead ? 0 : Math.abs(Math.sin(p.phase)) * -3;
     ctx.translate(0, bob);
     const SKIN = '#c8946f', SKIN_D = '#a8745a';
-    const SHIRT = '#86d4e8', SHIRT_D = '#5fb4cf', SHIRT_L = '#a9e6f5';
+    const SHIRT = '#86d4e8', SHIRT_D = '#5fb4cf', SHIRT_L = '#b4eaf7';
+    const HAIR = '#1b110d';
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
     // ground shadow
     ctx.fillStyle = 'rgba(0,0,0,.25)';
-    ctx.beginPath(); ctx.ellipse(0, HEAD_H - bob, 28, 8, 0, 0, 6.28); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, HEAD_H - bob, 32, 9, 0, 0, 6.28); ctx.fill();
 
-    // legs (dark trousers) + shoes
+    // legs + shoes
     ctx.fillStyle = '#34384a';
-    ctx.fillRect(-15, 60, 12, 26 + swing * 8);
-    ctx.fillRect(3, 60, 12, 26 - swing * 8);
+    ctx.fillRect(-18, 62, 14, 24 + swing * 8);
+    ctx.fillRect(4, 62, 14, 24 - swing * 8);
     ctx.fillStyle = '#1b1b1f';
-    ctx.beginPath(); ctx.roundRect(-17, 84 + swing * 8, 16, 9, 3); ctx.fill();
-    ctx.beginPath(); ctx.roundRect(1, 84 - swing * 8, 16, 9, 3); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(-20, 84 + swing * 8, 18, 9, 3); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(2, 84 - swing * 8, 18, 9, 3); ctx.fill();
 
-    // arms
-    [[-27, 1], [27, -1]].forEach(([ax, dir]) => {
-      ctx.save(); ctx.translate(ax, 24); ctx.rotate(swing * 0.55 * dir);
-      ctx.fillStyle = SHIRT; ctx.beginPath(); ctx.roundRect(-7, -4, 14, 26, 6); ctx.fill();
-      ctx.fillStyle = SHIRT_D; ctx.fillRect(-7, 16, 14, 3);
-      ctx.fillStyle = SKIN; ctx.beginPath(); ctx.arc(0, 27, 6, 0, 6.28); ctx.fill();
+    // arms (long sleeves) + hands
+    [[-36, 1], [36, -1]].forEach(([ax, dir]) => {
+      ctx.save(); ctx.translate(ax, 26); ctx.rotate(swing * 0.55 * dir);
+      ctx.fillStyle = SHIRT; ctx.beginPath(); ctx.roundRect(-8, -6, 16, 30, 7); ctx.fill();
+      ctx.fillStyle = SHIRT_D; ctx.fillRect(-8, 18, 16, 3);
+      ctx.fillStyle = SKIN; ctx.beginPath(); ctx.arc(0, 29, 6.5, 0, 6.28); ctx.fill();
       ctx.restore();
     });
 
-    // torso (shirt, broad shoulders)
+    // torso: wide, sloped shoulders
     ctx.fillStyle = SHIRT;
     ctx.beginPath();
-    ctx.moveTo(-18, 17);
-    ctx.quadraticCurveTo(-30, 20, -29, 34);
-    ctx.lineTo(-26, 66); ctx.lineTo(26, 66); ctx.lineTo(29, 34);
-    ctx.quadraticCurveTo(30, 20, 18, 17);
+    ctx.moveTo(-20, 16);
+    ctx.quadraticCurveTo(-38, 20, -36, 40);
+    ctx.lineTo(-32, 68); ctx.lineTo(32, 68); ctx.lineTo(36, 40);
+    ctx.quadraticCurveTo(38, 20, 20, 16);
     ctx.closePath(); ctx.fill();
-    // little dot pattern
+    // dot pattern
     ctx.fillStyle = SHIRT_D;
-    for (let y = 30, r = 0; y < 64; y += 8, r++) for (let x = -22; x <= 22; x += 9) {
+    for (let y = 30, r = 0; y < 66; y += 8, r++) for (let x = -28; x <= 28; x += 9) {
       ctx.fillRect(x + (r % 2 ? 4 : 0), y, 2, 2);
     }
-    // back yoke seam + wrinkles
+    // back yoke seam
     ctx.strokeStyle = SHIRT_D; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(-27, 30); ctx.quadraticCurveTo(0, 37, 27, 30); ctx.stroke();
-    ctx.strokeStyle = SHIRT_L; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(-10, 40); ctx.quadraticCurveTo(-6, 52, -9, 62); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(6, 42); ctx.quadraticCurveTo(10, 52, 8, 62); ctx.stroke();
-    ctx.strokeStyle = SHIRT_D; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(-16, 42); ctx.quadraticCurveTo(-13, 52, -15, 62); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-34, 32); ctx.quadraticCurveTo(0, 40, 34, 32); ctx.stroke();
+    // fabric folds (light + dark) like the wrinkled back in the photo
+    ctx.strokeStyle = SHIRT_L; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-12, 42); ctx.quadraticCurveTo(-8, 54, -12, 65); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(8, 42); ctx.quadraticCurveTo(14, 54, 10, 65); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(24, 38); ctx.quadraticCurveTo(26, 50, 22, 62); ctx.stroke();
+    ctx.strokeStyle = SHIRT_D; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(-20, 42); ctx.quadraticCurveTo(-17, 54, -20, 64); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(16, 44); ctx.quadraticCurveTo(19, 54, 17, 64); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-30, 38); ctx.lineTo(-24, 46); ctx.stroke();
 
-    // neck
+    // thick short neck
     ctx.fillStyle = SKIN_D;
-    ctx.beginPath(); ctx.roundRect(-9, 10, 18, 12, 4); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(-13, 10, 26, 14, 5); ctx.fill();
 
     // standing collar
     ctx.fillStyle = SHIRT_L;
-    ctx.beginPath(); ctx.moveTo(-16, 14); ctx.lineTo(-7, 12); ctx.lineTo(-2, 25); ctx.lineTo(-17, 24); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(16, 14); ctx.lineTo(7, 12); ctx.lineTo(2, 25); ctx.lineTo(17, 24); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = SHIRT_D; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(-17, 24); ctx.lineTo(-2, 25); ctx.moveTo(17, 24); ctx.lineTo(2, 25); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-20, 14); ctx.lineTo(-9, 11); ctx.lineTo(-3, 26); ctx.lineTo(-22, 25); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(20, 14); ctx.lineTo(9, 11); ctx.lineTo(3, 26); ctx.lineTo(22, 25); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = SHIRT_D; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(-22, 25); ctx.lineTo(-3, 26); ctx.moveTo(22, 25); ctx.lineTo(3, 26); ctx.stroke();
 
-    // head tilt while running
+    // ---- head group (tiny tilt + slight turn to the right like the photo) ----
     ctx.save();
-    ctx.rotate(p.dead ? 0.15 : swing * 0.04);
+    ctx.translate(2, 0);
+    ctx.rotate(p.dead ? 0.15 : swing * 0.035);
 
-    // nape hair (dark, thick at the back and sides)
-    ctx.fillStyle = '#1d130f';
-    ctx.beginPath(); ctx.ellipse(-3, 11, 17, 9, 0, 0, 6.28); ctx.fill();
+    // beard: sits behind the head, so only the sides bulging past the jaw show
+    ctx.fillStyle = '#150e0b';
+    ctx.beginPath(); ctx.ellipse(-17, 17, 9, 13, 0.35, 0, 6.28); ctx.fill();   // left side
+    ctx.beginPath(); ctx.ellipse(20, 19, 12, 15, -0.3, 0, 6.28); ctx.fill();   // right side (fuller)
+    ctx.beginPath(); ctx.ellipse(1, 22, 20, 10, 0, 0, 6.28); ctx.fill();       // under the chin
 
-    // head base (skin shows through the thin top)
-    ctx.fillStyle = '#1d130f';
-    ctx.beginPath(); ctx.ellipse(0, 0, 21, 21, 0, 0, 6.28); ctx.fill();
+    // nape hair
+    ctx.fillStyle = HAIR;
+    ctx.beginPath(); ctx.ellipse(0, 13, 19, 9, 0, 0, 6.28); ctx.fill();
 
-    // receding / thin top: skin patch with a few strands
-    ctx.fillStyle = '#b57e5c';
-    ctx.beginPath(); ctx.ellipse(-4, -11, 12, 7.5, -0.15, 0, 6.28); ctx.fill();
-    ctx.fillStyle = 'rgba(29,19,15,.28)';
-    ctx.beginPath(); ctx.ellipse(-4, -11, 12, 7.5, -0.15, 0, 6.28); ctx.fill();
-    ctx.strokeStyle = 'rgba(29,19,15,.7)'; ctx.lineWidth = 1;
+    // head: big, round
+    ctx.fillStyle = HAIR;
+    ctx.beginPath(); ctx.ellipse(0, 0, 23, 22, 0, 0, 6.28); ctx.fill();
+
+    // bald crown (skin) – ring of hair stays around it
+    ctx.fillStyle = '#b8805d';
+    ctx.beginPath(); ctx.ellipse(-2, -10, 15, 9.5, -0.1, 0, 6.28); ctx.fill();
+    // soft shading on the bald patch
+    ctx.fillStyle = 'rgba(255,220,190,.22)';
+    ctx.beginPath(); ctx.ellipse(-5, -13, 7, 4, -0.2, 0, 6.28); ctx.fill();
+    // fuzzy hairline along the lower edge of the bald patch
+    ctx.strokeStyle = 'rgba(27,17,13,.85)'; ctx.lineWidth = 1.3;
+    for (let a = 0.15; a < Math.PI - 0.1; a += 0.22) {
+      const sx = -2 + Math.cos(a) * 13, sy = -10 + Math.sin(a) * 8;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + Math.cos(a) * 2.5, sy + Math.sin(a) * 3.5); ctx.stroke();
+    }
+    // a few thin strands over the patch
+    ctx.strokeStyle = 'rgba(27,17,13,.55)'; ctx.lineWidth = 1;
     for (let i = -3; i <= 3; i++) {
-      ctx.beginPath(); ctx.moveTo(-4 + i * 3, -16); ctx.lineTo(-4 + i * 3 + 1, -7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-2 + i * 3.2, -17); ctx.lineTo(-2 + i * 3.2 + 1.5, -9); ctx.stroke();
     }
 
-    // right ear
+    // ears
     ctx.fillStyle = SKIN;
-    ctx.beginPath(); ctx.ellipse(17, 2, 5, 7, 0, 0, 6.28); ctx.fill();
-    ctx.strokeStyle = SKIN_D; ctx.lineWidth = 1.3;
-    ctx.beginPath(); ctx.arc(17, 2, 2.6, 0.4, 5.2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(-23, 3, 5, 8, 0, 0, 6.28); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(23, 3, 5.5, 8, 0, 0, 6.28); ctx.fill();
+    ctx.strokeStyle = SKIN_D; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(-23, 3, 3, 0.5, 5.3); ctx.stroke();
+    ctx.beginPath(); ctx.arc(23, 3, 3.2, 0.4, 5.2); ctx.stroke();
 
-    // beard along the jaw, sticking out past the cheek (right side)
-    ctx.fillStyle = '#150e0b';
-    ctx.beginPath();
-    ctx.moveTo(14, 6);
-    ctx.quadraticCurveTo(33, 4, 31, 22);
-    ctx.quadraticCurveTo(29, 38, 14, 32);
-    ctx.quadraticCurveTo(4, 26, 8, 14);
-    ctx.closePath(); ctx.fill();
-    // beard highlight
-    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(18, 12); ctx.quadraticCurveTo(26, 18, 22, 28); ctx.stroke();
-
-    // glasses: temple arm over the ear + the frame peeking out in front
-    ctx.strokeStyle = '#5b4a2e'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(16, -3); ctx.lineTo(29, -6); ctx.stroke();
+    // glasses: arms over both ears; frame corner peeks out on the right side
+    ctx.strokeStyle = '#5b4a2e'; ctx.lineWidth = 2.8;
+    ctx.beginPath(); ctx.moveTo(-22, -3); ctx.lineTo(-30, -7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(22, -3); ctx.lineTo(36, -7); ctx.stroke();
     ctx.fillStyle = 'rgba(190,225,240,.35)';
-    ctx.beginPath(); ctx.roundRect(28, -11, 13, 11, 2); ctx.fill();
-    ctx.strokeStyle = '#3d3020'; ctx.lineWidth = 2.4;
-    ctx.beginPath(); ctx.roundRect(28, -11, 13, 11, 2); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(35, -13, 14, 12, 2); ctx.fill();
+    ctx.strokeStyle = '#3d3020'; ctx.lineWidth = 2.6;
+    ctx.beginPath(); ctx.roundRect(35, -13, 14, 12, 2); ctx.stroke();
 
-    ctx.restore();
+    ctx.restore(); // head group
     ctx.restore();
 
     // coconut stuck on the head after a hit + stars
     if (p.dead) {
-      const hx = p.x, hy = FEET_Y - HEAD_H;
+      const hx = p.x, hy = FEET_Y - HEAD_H - 8;
       ctx.fillStyle = '#5b3a1e';
-      ctx.beginPath(); ctx.arc(hx + 2, hy - 22, 13, 0, 6.28); ctx.fill();
+      ctx.beginPath(); ctx.arc(hx + 2, hy - 22, 14, 0, 6.28); ctx.fill();
       ctx.fillStyle = '#7b5230';
       ctx.beginPath(); ctx.arc(hx - 2, hy - 26, 5, 0, 6.28); ctx.fill();
       ctx.fillStyle = '#ffd24a'; ctx.font = '22px sans-serif'; ctx.textAlign = 'center';
       const a = performance.now() / 200;
       for (let i = 0; i < 3; i++) {
-        ctx.fillText('★', hx + Math.cos(a + i * 2.1) * 28, hy - 40 + Math.sin(a + i * 2.1) * 8);
+        ctx.fillText('★', hx + Math.cos(a + i * 2.1) * 30, hy - 42 + Math.sin(a + i * 2.1) * 8);
       }
     }
   }
